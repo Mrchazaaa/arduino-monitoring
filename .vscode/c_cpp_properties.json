@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/mrchazaaa/Arduino/libraries/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/cores/arduino/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/libraries/EEPROM/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/libraries/SPI/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/libraries/SoftwareSerial/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/libraries/Wire/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/tools/avr/avr/include/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/tools/avr/avr/include/avr/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/tools/avr/avr/include/compat/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/tools/avr/avr/include/util/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/libraries/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/tools/avr/lib/gcc/avr/7.3.0/include/**",
+                "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/tools/avr/lib/gcc/avr/7.3.0/include-fixed/**",
+            ],
+            "defines": ["USBCON"],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
