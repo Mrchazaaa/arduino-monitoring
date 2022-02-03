@@ -42,16 +42,23 @@ class LoRaRcvCont(LoRa):
 
 
     def on_rx_done(self):
-        print("\nReceived: ")
         self.clear_irq_flags(RxDone=1)
-        payload = self.read_payload(nocheck=True)
-        print(bytes(payload).decode("utf-8",'ignore'))
+        payload = ((bytes)(self.read_payload(nocheck=True))).decode("utf-8", 'ignore')
+        print("\nReceived: ")
+        print(payload)
         self.set_mode(MODE.SLEEP)
         self.reset_ptr_rx()
         self.set_mode(MODE.RXCONT)
 
+        payloadObject = json.load(payload);
+
+        requestPayload = ""
+
+        for key, value in payloadObject:
+            requestPayload += f'{propertyToField[key]}={value}&'
+
         # post data to dashboard
-        response = requests.get(f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{propertyToField["presence"]}={data}')
+        response = requests.get(f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}')
         print(response)
 
 
