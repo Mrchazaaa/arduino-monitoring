@@ -3,6 +3,7 @@
 #include <Dht22Sensor.ino>
 #include <HcSr501.ino>>
 #include <LoraModule.ino>
+#include <ArduinoJson.h>
 
 void setup()
 {
@@ -30,15 +31,14 @@ void loop()
     int presence = GetPresenceState();
 
     // construct json object
-    String message = "{\"humidity\": ";
-    message.concat(humidity);
-    message.concat(",\"temp\": ");
-    message.concat(temp);
-    message.concat(",\"lux\": ");
-    message.concat(lux);
-    message.concat(",\"presence\": ");
-    message.concat(presence);
-    message.concat("}");
+    StaticJsonDocument<500> jsonData;
+    jsonData["humidity"] = humidity;
+    jsonData["temperature"] = temp;
+    jsonData["presence"] = presence;
+    jsonData["lux"] = lux;
+
+    char message[256];
+    serializeJson(jsonData, message);
 
     SendRadioMessage(message);
 

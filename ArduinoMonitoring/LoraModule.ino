@@ -43,21 +43,12 @@ void SetupLoraModule()
     Serial.println("Finished LORA init.");
 }
 
-void SendRadioMessage(const String message)
+void SendRadioMessage(const char* char_array)
 {
     Serial.print("Started transmitting message: ");
-    Serial.println(message);
+    Serial.println(char_array);
 
-    int n = message.length();
-
-    // declaring character array
-    char char_array[n + 1];
-
-    // copying the contents of the
-    // string to char array
-    strcpy(char_array, message.c_str());
-
-    rf95.send((uint8_t*)char_array, message.length());
+    rf95.send((uint8_t*)char_array, strlen(char_array));
     rf95.setModeRx();
 
     Serial.print("Finished transmitting.");

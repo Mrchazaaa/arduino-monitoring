@@ -4,6 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/ArduinoMonitoring/**",
                 "/home/mrchazaaa/Arduino/libraries/**",
                 "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/**",
                 "/home/mrchazaaa/workspace/arduino-1.8.16-linux64/arduino-1.8.16/hardware/arduino/avr/cores/arduino/**",
