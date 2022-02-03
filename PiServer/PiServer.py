@@ -19,13 +19,18 @@ propertyToField = {
     "presence": "field1",
     "humidity": "field2",
     "temperature": "field3",
-    "light": "field4"
+    "lux": "field4"
 }
 
 data = 1
 
 BOARD.setup()
 BOARD.reset()
+
+def escapeString(input):
+    escapes = ''.join([chr(char) for char in range(0, 32)])
+    translator = str.maketrans('', '', escapes)
+    return input.translate(translator)
 
 class LoRaRcvCont(LoRa):
     def __init__(self, verbose=False):
@@ -44,29 +49,35 @@ class LoRaRcvCont(LoRa):
     def on_rx_done(self):
         self.clear_irq_flags(RxDone=1)
         payload = ((bytes)(self.read_payload(nocheck=True))).decode("utf-8", 'ignore')
+
+        payload = escapeString(payload)
+
         print("\nReceived: ")
-        print(payload)
+        print(repr(payload))
+
         self.set_mode(MODE.SLEEP)
         self.reset_ptr_rx()
         self.set_mode(MODE.RXCONT)
 
-        payloadObject = json.load(payload);
-
+        payloadObject = json.loads(payload)
         requestPayload = ""
 
-        for key, value in payloadObject:
-            requestPayload += f'{propertyToField[key]}={value}&'
+        for key in payloadObject:
+            if key in propertyToField:
+                requestPayload += f'{propertyToField[key]}={payloadObject[key]}&'
 
-        # post data to dashboard
-        response = requests.get(f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}')
-        print(response)
+        if len(requestPayload) > 0:
+            # post data to dashboard
+            response = requests.get(f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}')
+            print(response)
+        else:
+            print("Failed to decode message.")
 
 
 lora = LoRaRcvCont(verbose=True)
 lora.set_mode(MODE.STDBY)
 
 #  Medium Range  Defaults after init are 434.0MHz, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on 13 dBm
-
 lora.set_pa_config(pa_select=1)
 
 try:
@@ -81,4 +92,3 @@ finally:
     print("")
     lora.set_mode(MODE.SLEEP)
     BOARD.teardown()
-
