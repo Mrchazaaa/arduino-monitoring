@@ -53,3 +53,15 @@ void SendRadioMessage(const char* char_array)
 
     Serial.print("Finished transmitting.");
 }
+
+void LoraSleep()
+{
+    Serial.println("Lora going to sleep.");
+    rf95.sleep();
+}
+
+void LoraWake()
+{
+    Serial.println("Lora waking up.");
+    rf95.setModeTx();
+}

@@ -1,9 +1,10 @@
 #include <Arduino.h>
-#include <Veml7700Sensor.ino>
-#include <Dht22Sensor.ino>
-#include <HcSr501.ino>>
-#include <LoraModule.ino>
+//#include <Veml7700Sensor.ino>
+//#include <Dht22Sensor.ino>
+//#include <HcSr501.ino>>
+//#include <LoraModule.ino>
 #include <ArduinoJson.h>
+#include "LowPower.h"
 
 void setup()
 {
@@ -18,10 +19,22 @@ void setup()
     Serial.println("Init finished.");
 }
 
+void SleepForMinutes(float minutes)
+{
+    int totalSeconds = (minutes) * 60;
+
+    for (int i = 0; i < totalSeconds; i+=8)
+    {
+        LoraSleep();
+        LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+    }
+
+    LoraWake();
+}
+
 void loop()
 {
-    // Wait a few seconds between measurements.
-    delay(5000);
+    SleepForMinutes(0.25);
 
     Serial.println("Beginning control loop.");
 
