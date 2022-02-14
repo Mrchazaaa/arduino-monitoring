@@ -6,9 +6,10 @@ int val = 0;
 bool motionState = false;
 
 void SetupMotionSensor() {
-    Serial.println("Began DHT22 init.");
+    Serial.println("Began HCSR501 init.");
     pinMode(pirPin, INPUT);
-    Serial.println("Finished DHT22 init.");
+    Serial.println("Finished HCSR501 init.");
+    Serial.flush();
 }
 
 int GetPresenceState() {

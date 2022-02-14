@@ -22,6 +22,7 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 void SetupLoraModule()
 {
     Serial.println("Beginning LORA init.");
+    rf95.sleep();
     pinMode(RFM95_RST, OUTPUT);
     digitalWrite(RFM95_RST, LOW);
     delay(10);
@@ -30,13 +31,14 @@ void SetupLoraModule()
 
     while (!rf95.init()) {
         Serial.println("LORA init failed.");
-        while (1);
+        Serial.flush();
+        // rf95.setModeIdle();
     }
 
     //Set the default frequency 434.0MHz
-    if (!rf95.setFrequency(RF95_FREQ)) {
+    while (!rf95.setFrequency(RF95_FREQ)) {
         Serial.println("Setting LORA frequency failed.");
-        while (1);
+        Serial.flush();
     }
 
     rf95.setTxPower(18); //Transmission power of the Lora Module
