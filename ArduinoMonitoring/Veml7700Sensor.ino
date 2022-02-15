@@ -19,10 +19,12 @@ void SetupLuxSensor()
 }
 
 void VemlSleep() {
+  Serial.println("veml going to sleep.");
   veml.enable(true);
 }
 
 void VemlWake() {
+  Serial.println("veml waking up.");
   veml.enable(false);
 }
 

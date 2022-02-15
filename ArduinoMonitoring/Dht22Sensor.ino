@@ -26,61 +26,32 @@ float ReadFromHumidityAndTemperatureSensor() {
     Serial.println("Began reading DHT22 sensor.");
     int chk = DHT.read22(DHT22_PIN);
 
-    stat.total++;
+    Serial.print("Finished reading DHT22 sensor: ");
+    
     switch (chk)
     {
     case DHTLIB_OK:
-        stat.ok++;
-        Serial.print("OK,\t");
+        Serial.println("OK.");
         break;
     case DHTLIB_ERROR_CHECKSUM:
-        stat.crc_error++;
-        Serial.print("Checksum error,\t");
+        Serial.println("Checksum error.");
         break;
     case DHTLIB_ERROR_TIMEOUT:
-        stat.time_out++;
-        Serial.print("Time out error,\t");
+        Serial.println("Time out error.");
         break;
     case DHTLIB_ERROR_CONNECT:
-        stat.connect++;
-        Serial.print("Connect error,\t");
+        Serial.println("Connect error.");
         break;
     case DHTLIB_ERROR_ACK_L:
-        stat.ack_l++;
-        Serial.print("Ack Low error,\t");
+        Serial.println("Ack Low error.");
         break;
     case DHTLIB_ERROR_ACK_H:
-        stat.ack_h++;
-        Serial.print("Ack High error,\t");
+        Serial.println("Ack High error.");
         break;
     default:
-        stat.unknown++;
-        Serial.print("Unknown error,\t");
+        Serial.println("Unknown error.");
         break;
     }
-
-    if (stat.total % 20 == 0)
-    {
-        Serial.println("\nTOT\tOK\tCRC\tTO\tCON\tACK_L\tACK_H\tUNK");
-        Serial.print(stat.total);
-        Serial.print("\t");
-        Serial.print(stat.ok);
-        Serial.print("\t");
-        Serial.print(stat.crc_error);
-        Serial.print("\t");
-        Serial.print(stat.time_out);
-        Serial.print("\t");
-        Serial.print(stat.connect);
-        Serial.print("\t");
-        Serial.print(stat.ack_l);
-        Serial.print("\t");
-        Serial.print(stat.ack_h);
-        Serial.print("\t");
-        Serial.print(stat.unknown);
-        Serial.println("\n");
-    }    
-    
-    Serial.println("Finished reading DHT22 sensor.");
 }
 
 float GetLastHumidityReading() {
