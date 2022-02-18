@@ -5,6 +5,7 @@ from SX127x.LoRa import *
 from SX127x.board_config import BOARD
 import requests
 import json
+from datetime import datetime
 
 environmentVariables = open('./environment.json', "r")
 
@@ -16,9 +17,9 @@ thingsSpeakReadKey = environmentVariablesJson["ts_read_key"]
 environmentVariables.close()
 
 propertyToField = {
-    "presence": "field1",
-    "humidity": "field2",
-    "temperature": "field3",
+    "psc": "field1",
+    "hmd": "field2",
+    "tmp": "field3",
     "lux": "field4"
 }
 
@@ -45,6 +46,10 @@ class LoRaRcvCont(LoRa):
             sleep(.5)
             sys.stdout.flush()
 
+    def on_payload_crc_error(self):
+        print("\nPayload error")
+        print("\non_PayloadCrcError")
+        print(self.get_irq_flags())
 
     def on_rx_done(self):
         self.clear_irq_flags(RxDone=1)
@@ -52,6 +57,10 @@ class LoRaRcvCont(LoRa):
 
         payload = escapeString(payload)
 
+        print("\nTime: ")
+        print(datetime.now())
+        print("\nTime: ")
+        print(self.get_rssi_value())
         print("\nReceived: ")
         print(repr(payload))
 
@@ -68,7 +77,9 @@ class LoRaRcvCont(LoRa):
 
         if len(requestPayload) > 0:
             # post data to dashboard
-            response = requests.get(f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}')
+            request = f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}'
+            print(request)
+            response = requests.get(request)
             print(response)
         else:
             print("Failed to decode message.")
@@ -79,6 +90,8 @@ lora.set_mode(MODE.STDBY)
 
 #  Medium Range  Defaults after init are 434.0MHz, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on 13 dBm
 lora.set_pa_config(pa_select=1)
+lora.set_spreading_factor(10)
+lora.set_rx_crc(True)
 
 try:
     print("started")
