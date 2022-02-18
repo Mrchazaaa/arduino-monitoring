@@ -6,8 +6,16 @@ from SX127x.board_config import BOARD
 import requests
 import json
 from datetime import datetime
+import pygsheets
 
-environmentVariables = open('./environment.json', "r")
+#authorization
+gc = pygsheets.authorize(service_file='/home/pi/workspace/arduino-monitoring/PiServer/GoogleDriveCreds.json')
+
+#open the google spreadsheet 
+sh = gc.open('Arduino Monitoring')
+wks = sh[0]
+
+environmentVariables = open('/home/pi/workspace/arduino-monitoring/PiServer/environment.json', "r")
 
 environmentVariablesJson = json.loads(environmentVariables.read())
 
@@ -47,9 +55,11 @@ class LoRaRcvCont(LoRa):
             sys.stdout.flush()
 
     def on_payload_crc_error(self):
+        irqFlags = self.get_irq_flags()
+        wks.append_table(values=["CRC Error encountered", irqFlags])
         print("\nPayload error")
         print("\non_PayloadCrcError")
-        print(self.get_irq_flags())
+        print(irqFlags)
 
     def on_rx_done(self):
         self.clear_irq_flags(RxDone=1)
@@ -57,12 +67,17 @@ class LoRaRcvCont(LoRa):
 
         payload = escapeString(payload)
 
+        now = datetime.now()
+        time = now.strftime("%m/%d/%Y %H:%M:%S")
+        rsi = self.get_rssi_value()
         print("\nTime: ")
-        print(datetime.now())
-        print("\nTime: ")
-        print(self.get_rssi_value())
+        print(time)
+        print("\nRSSI: ")
+        print(rsi)
         print("\nReceived: ")
         print(repr(payload))
+
+        wks.append_table(values=[time, rsi, payload])
 
         self.set_mode(MODE.SLEEP)
         self.reset_ptr_rx()

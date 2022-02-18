@@ -1,0 +1,12 @@
+[Unit]
+Description=Raspberry pi arduino lora receiver
+
+[Service]
+Type=simple
+After=network-online.target
+Wants=network-online.target
+ExecStart=/bin/bash /home/pi/workspace/arduino-monitoring/PiServer/start.sh
+
+[Install]
+WantedBy=multi-user.target
+
