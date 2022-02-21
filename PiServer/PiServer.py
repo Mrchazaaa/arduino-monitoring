@@ -55,49 +55,58 @@ class LoRaRcvCont(LoRa):
             sys.stdout.flush()
 
     def on_payload_crc_error(self):
+        now = datetime.now()
+        time = now.strftime("%m/%d/%Y %H:%M:%S")
         irqFlags = self.get_irq_flags()
-        wks.append_table(values=["CRC Error encountered", irqFlags])
+        wks.append_table(values=[time, "CRC Error encountered", irqFlags])
         print("\nPayload error")
         print("\non_PayloadCrcError")
         print(irqFlags)
 
     def on_rx_done(self):
-        self.clear_irq_flags(RxDone=1)
-        payload = ((bytes)(self.read_payload(nocheck=True))).decode("utf-8", 'ignore')
-
-        payload = escapeString(payload)
-
         now = datetime.now()
         time = now.strftime("%m/%d/%Y %H:%M:%S")
-        rsi = self.get_rssi_value()
         print("\nTime: ")
         print(time)
-        print("\nRSSI: ")
-        print(rsi)
-        print("\nReceived: ")
-        print(repr(payload))
 
-        wks.append_table(values=[time, rsi, payload])
+        try:
+            self.clear_irq_flags(RxDone=1)
+            payload = ((bytes)(self.read_payload(nocheck=True))).decode("utf-8", 'ignore')
 
-        self.set_mode(MODE.SLEEP)
-        self.reset_ptr_rx()
-        self.set_mode(MODE.RXCONT)
+            payload = escapeString(payload)
 
-        payloadObject = json.loads(payload)
-        requestPayload = ""
+            rsi = self.get_rssi_value()
+            print("\nRSSI: ")
+            print(rsi)
+            print("\nReceived: ")
+            print(repr(payload))
 
-        for key in payloadObject:
-            if key in propertyToField:
-                requestPayload += f'{propertyToField[key]}={payloadObject[key]}&'
+            wks.append_table(values=[time, rsi, payload])
 
-        if len(requestPayload) > 0:
-            # post data to dashboard
-            request = f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}'
-            print(request)
-            response = requests.get(request)
-            print(response)
-        else:
-            print("Failed to decode message.")
+            self.set_mode(MODE.SLEEP)
+            self.reset_ptr_rx()
+            self.set_mode(MODE.RXCONT)
+
+            payloadObject = json.loads(payload)
+            requestPayload = ""
+
+            for key in payloadObject:
+                if key in propertyToField:
+                    requestPayload += f'{propertyToField[key]}={payloadObject[key]}&'
+
+            if len(requestPayload) > 0:
+                # post data to dashboard
+                request = f'https://api.thingspeak.com/update?api_key={thingsSpeakWriteKey}&{requestPayload}'
+                print(request)
+                response = requests.get(request)
+                print(response)
+            else:
+                print("Failed to decode message.")
+        except BaseException as err:
+            message = "Receive error: {0}".format(err)
+            print(message)
+            wks.append_table(values=[time, message])
+
 
 
 lora = LoRaRcvCont(verbose=True)
@@ -115,6 +124,10 @@ except KeyboardInterrupt:
     sys.stdout.flush()
     print("")
     sys.stderr.write("KeyboardInterrupt\n")
+except BaseException as err:
+    message = "Application error: {0}".format(err)
+    print(message)
+    wks.append_table(values=[message])
 finally:
     sys.stdout.flush()
     print("")
