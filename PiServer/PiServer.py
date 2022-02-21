@@ -3,6 +3,7 @@
 from time import sleep
 from SX127x.LoRa import *
 from SX127x.board_config import BOARD
+from SX127x.constants import *
 import requests
 import json
 from datetime import datetime
@@ -116,6 +117,7 @@ lora.set_mode(MODE.STDBY)
 lora.set_pa_config(pa_select=1)
 lora.set_spreading_factor(10)
 lora.set_rx_crc(True)
+lora.set_bw(BW.BW62_5)
 
 try:
     print("started")
