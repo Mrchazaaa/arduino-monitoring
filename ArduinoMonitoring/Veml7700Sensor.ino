@@ -22,9 +22,13 @@ void VemlWake() {
 
 float GetLuxReading()
 {
+    VemlWake();
+  
     float lux;
 
     lux = veml.readLuxNormalized();
+
+    VemlSleep();
 
     return lux;
 }

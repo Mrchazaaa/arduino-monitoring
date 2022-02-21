@@ -27,9 +27,6 @@ void SleepForMinutes(float minutes)
 
 void loop()
 {
-    LoraWake();
-    VemlWake();
-
     float lux = GetLuxReading();
     ReadFromHumidityAndTemperatureSensor();
     float humidity = GetLastHumidityReading();
@@ -46,9 +43,6 @@ void loop()
     serializeJson(jsonData, message);
 
     SendRadioMessage(message);
-
-    VemlSleep();
-    LoraSleep();
 
     SleepForMinutes(10);
 }
