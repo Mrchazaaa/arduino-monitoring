@@ -10,7 +10,7 @@ from datetime import datetime
 import pygsheets
 
 #authorization
-gc = pygsheets.authorize(service_file='/home/pi/workspace/arduino-monitoring/PiServer/GoogleDriveCreds.json')
+gc = pygsheets.authorize(service_file='/home/pi/workspace/arduino-monitoring/PiServer/environment.json')
 
 #open the google spreadsheet 
 sh = gc.open('Arduino Monitoring')
