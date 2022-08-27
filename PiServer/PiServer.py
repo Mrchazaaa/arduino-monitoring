@@ -59,7 +59,9 @@ class LoRaRcvCont(LoRa):
         now = datetime.now()
         time = now.strftime("%m/%d/%Y %H:%M:%S")
         irqFlags = self.get_irq_flags()
-        wks.append_table(values=[time, "CRC Error encountered", irqFlags])
+        payload = ((bytes)(self.read_payload(nocheck=True))).decode("utf-8", 'ignore')
+        rxIsGood = self.rx_is_good()
+        wks.append_table(values=[time, rxIsGood, payload, "CRC Error encountered", irqFlags])
         print("\nPayload error")
         print("\non_PayloadCrcError")
         print(irqFlags)
@@ -77,12 +79,15 @@ class LoRaRcvCont(LoRa):
             payload = escapeString(payload)
 
             rsi = self.get_rssi_value()
+            rxIsGood = self.rx_is_good()
+            print("\nrx is good: ")
+            print(rxIsGood)
             print("\nRSSI: ")
             print(rsi)
             print("\nReceived: ")
             print(repr(payload))
 
-            wks.append_table(values=[time, rsi, payload])
+            wks.append_table(values=[time, rsi, rxIsGood, payload])
 
             self.set_mode(MODE.SLEEP)
             self.reset_ptr_rx()
