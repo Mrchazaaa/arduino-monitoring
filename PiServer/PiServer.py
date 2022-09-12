@@ -3,7 +3,7 @@ from SX127x.board_config import BOARD
 from SX127x.constants import *
 import json
 import pygsheets
-from LoraReciever import LoraReceiver
+from LoraReceiver import LoraReceiver
 from StreamToLogger import StreamToLogger
 import sys
 import logging
