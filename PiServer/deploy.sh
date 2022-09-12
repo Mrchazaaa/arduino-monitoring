@@ -22,4 +22,4 @@ docker kill loki-container
 
 echo "spinning up loki container"
 
-docker-compose up -d
+docker compose up -d

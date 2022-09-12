@@ -7,16 +7,25 @@ from LoraReciever import LoraReceiver
 from StreamToLogger import StreamToLogger
 import sys
 import logging
+import logging_loki
+
+handler = logging_loki.LokiHandler(
+    url="http://localhost/loki/api/v1/push",
+    tags={"application": "lora-receiver"},
+    auth=("admin", "admin"),
+    version="1",
+)
 
 logging.basicConfig(
         level=logging.DEBUG,
-        format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
-        filename='out.log',
-        filemode='a')
+        format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
 
-log = logging.getLogger('logger')
-sys.stdout = StreamToLogger(log,logging.INFO)
-sys.stderr = StreamToLogger(log,logging.ERROR)
+logger = logging.getLogger('logger')
+
+logger.addHandler(handler)
+
+sys.stdout = StreamToLogger(logger,logging.INFO)
+sys.stderr = StreamToLogger(logger,logging.ERROR)
 
 #authorization
 gc = pygsheets.authorize(service_file='/home/pi/workspace/arduino-monitoring/PiServer/environment.json')
