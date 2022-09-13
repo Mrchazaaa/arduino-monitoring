@@ -10,7 +10,7 @@ import logging
 import logging_loki
 
 handler = logging_loki.LokiHandler(
-    url="http://localhost/loki/api/v1/push",
+    url="http://localhost:3100/loki/api/v1/push",
     tags={"application": "lora-receiver"},
     auth=("admin", "admin"),
     version="1",
