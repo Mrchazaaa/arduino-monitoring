@@ -14,3 +14,4 @@ services:
     command: -config.file=/etc/loki/loki-config.yaml -log.level=debug
     networks:
       - loki
+    restart: always
