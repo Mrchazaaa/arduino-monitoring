@@ -1,9 +1,8 @@
 from time import sleep
+from datetime import datetime, timedelta
 from SX127x.LoRa import *
 from SX127x.constants import *
-import requests
 import json
-from datetime import datetime
 
 def escapeString(input):
     escapes = ''.join([chr(char) for char in range(0, 32)])
@@ -11,13 +10,16 @@ def escapeString(input):
     return input.translate(translator)
 
 class LoraReceiver(LoRa):
-    def __init__(self, verbose, wks, propertyToField, thingsSpeakWriteKey):
+
+    def __init__(self, verbose, logger, dataLogger):
         super(LoraReceiver, self).__init__(verbose)
         self.set_mode(MODE.SLEEP)
         self.set_dio_mapping([0] * 6)
-        self.wks = wks
-        self.propertyToField = propertyToField
-        self.thingsSpeakWriteKey = thingsSpeakWriteKey
+        self.logger = logger
+        self.dataLogger = dataLogger
+
+    def HasReceivedSuccessfullyInLast25Mins(self):
+        return self.lastSuccesfulTransmissionTimestamp is not None and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) > timedelta(minutes=25)
 
     def start(self):
         self.reset_ptr_rx()
@@ -27,21 +29,13 @@ class LoraReceiver(LoRa):
             sys.stdout.flush()
 
     def on_payload_crc_error(self):
-        now = datetime.now()
-        time = now.strftime("%m/%d/%Y %H:%M:%S")
         irqFlags = self.get_irq_flags()
-        payload = ((bytes)(self.read_payload(nocheck=True))).decode("utf-8", 'ignore')
+        payload = ((bytes)(self.read_payload(nocheck=False))).decode("utf-8", 'ignore')
         rxIsGood = self.rx_is_good()
-        self.wks.append_table(values=[time, rxIsGood, payload, "CRC Error encountered", irqFlags])
-        print("\nPayload error")
-        print("\non_PayloadCrcError")
-        print(irqFlags)
+        self.logger.info(f'rx is good: {rxIsGood} {payload} {"CRC Error encountered"} irq flags: {irqFlags}.')
 
     def on_rx_done(self):
-        now = datetime.now()
-        time = now.strftime("%m/%d/%Y %H:%M:%S")
-        print("\nTime: ")
-        print(time)
+        self.logger.info(f'Message received.')
 
         try:
             self.clear_irq_flags(RxDone=1)
@@ -51,35 +45,22 @@ class LoraReceiver(LoRa):
 
             rsi = self.get_rssi_value()
             rxIsGood = self.rx_is_good()
-            print("\nrx is good: ")
-            print(rxIsGood)
-            print("\nRSSI: ")
-            print(rsi)
-            print("\nReceived: ")
-            print(repr(payload))
 
-            self.wks.append_table(values=[time, rsi, rxIsGood, payload])
+            self.logger.info(f'rsi: {rsi} rx is good: {rxIsGood} {payload}.')
 
             self.set_mode(MODE.SLEEP)
             self.reset_ptr_rx()
             self.set_mode(MODE.RXCONT)
 
             payloadObject = json.loads(payload)
-            requestPayload = ""
 
-            for key in payloadObject:
-                if key in self.propertyToField:
-                    requestPayload += f'{self.propertyToField[key]}={payloadObject[key]}&'
+            self.dataLogger.log(payloadObject)
 
-            if len(requestPayload) > 0:
-                # post data to dashboard
-                request = f'https://api.thingspeak.com/update?api_key={self.thingsSpeakWriteKey}&{requestPayload}'
-                print(request)
-                response = requests.get(request)
-                print(response)
-            else:
-                print("Failed to decode message.")
+            self.lastSuccesfulTransmissionTimestamp = datetime.now()
         except BaseException as err:
             message = "Receive error: {0}".format(err)
-            print(message)
-            self.wks.append_table(values=[time, message])
+            self.logger.error(f'{message}.')
+
+    def on_rx_timeout(self):
+        self.logger.info('RX timeout.')
+

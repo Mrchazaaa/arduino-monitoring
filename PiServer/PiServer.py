@@ -2,19 +2,14 @@ from SX127x.LoRa import *
 from SX127x.board_config import BOARD
 from SX127x.constants import *
 import json
-import pygsheets
 from LoraReceiver import LoraReceiver
 from StreamToLogger import StreamToLogger
 import sys
 import logging
 import logging_loki
-
-handler = logging_loki.LokiHandler(
-    url="http://localhost:3100/loki/api/v1/push",
-    tags={"application": "lora-receiver"},
-    auth=("admin", "admin"),
-    version="1",
-)
+from logging.GoogleSheetsHandler import GoogleSheetsHandler
+from logging.ThingsSpeakLogger import ThingsSpeakLogger
+from threading import Timer
 
 logging.basicConfig(
         level=logging.DEBUG,
@@ -22,59 +17,71 @@ logging.basicConfig(
 
 logger = logging.getLogger('logger')
 
-logger.addHandler(handler)
+logger.addHandler(
+    logging_loki.LokiHandler(
+        url="http://localhost:3100/loki/api/v1/push",
+        tags={"application": "lora-receiver"},
+        auth=("admin", "admin"),
+        version="1"))
+
+logger.addHandler(
+    GoogleSheetsHandler(
+        '/home/pi/workspace/arduino-monitoring/PiServer/environment.json',
+        'Arduino Monitoring'))
 
 sys.stdout = StreamToLogger(logger,logging.INFO)
 sys.stderr = StreamToLogger(logger,logging.ERROR)
-
-#authorization
-gc = pygsheets.authorize(service_file='/home/pi/workspace/arduino-monitoring/PiServer/environment.json')
-
-#open the google spreadsheet
-sh = gc.open('Arduino Monitoring')
-wks = sh[0]
 
 environmentVariables = open('/home/pi/workspace/arduino-monitoring/PiServer/environment.json', "r")
 
 environmentVariablesJson = json.loads(environmentVariables.read())
 
-thingsSpeakWriteKey = environmentVariablesJson["ts_write_key"]
-thingsSpeakReadKey = environmentVariablesJson["ts_read_key"]
-
 environmentVariables.close()
 
-propertyToField = {
-    "psc": "field1",
-    "hmd": "field2",
-    "tmp": "field3",
-    "lux": "field4"
-}
+thingsSpeakWriteKey = environmentVariablesJson["ts_write_key"]
 
-data = 1
+dataLogger = ThingsSpeakLogger(logger, thingsSpeakWriteKey)
 
-BOARD.setup()
-BOARD.reset()
+lora = None
 
-lora = LoraReceiver(verbose=True, wks=wks, propertyToField=propertyToField, thingsSpeakWriteKey=thingsSpeakWriteKey)
-lora.set_mode(MODE.STDBY)
+def KeepLoraAlive():
+    global lora
+    if not lora.HasReceivedSuccessfullyInLast25Mins():
+        shutdownLoraReceiver()
+        keepAliveTimer = Timer(25*60, KeepLoraAlive)
+        keepAliveTimer.start()
+        lora = startNewLoraReceiver()
 
-#  Medium Range  Defaults after init are 434.0MHz, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on 13 dBm
-lora.set_pa_config(pa_select=1)
-lora.set_spreading_factor(10)
-lora.set_rx_crc(True)
-lora.set_bw(BW.BW62_5)
+def startNewLoraReceiver():
+    global lora
+    BOARD.setup()
+    BOARD.reset()
+    lora = LoraReceiver(verbose=True, logger=logger, dataLogger=dataLogger)
+    lora.set_mode(MODE.STDBY)
+
+    #  Medium Range  Defaults after init are 434.0MHz, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on 13 dBm
+    lora.set_pa_config(pa_select=1)
+    lora.set_spreading_factor(10)
+    lora.set_rx_crc(True)
+    lora.set_bw(BW.BW62_5)
+
+def shutdownLoraReceiver():
+    global lora
+    lora.set_mode(MODE.SLEEP)
+    BOARD.teardown()
+    lora = None
 
 try:
-    print("started")
-    lora.start()
+    logger.info("started")
+    keepAliveTimer = Timer(25*60, KeepLoraAlive)
+    keepAliveTimer.start()
+    startNewLoraReceiver()
 except KeyboardInterrupt:
     sys.stdout.flush()
     sys.stderr.write("KeyboardInterrupt\n")
 except BaseException as err:
-    message = "Application error: {0}".format(err)
-    print(message)
-    wks.append_table(values=[message])
+    logger.exception(err)
 finally:
     sys.stdout.flush()
-    lora.set_mode(MODE.SLEEP)
-    BOARD.teardown()
+    shutdownLoraReceiver()
+    keepAliveTimer.cancel()
