@@ -17,6 +17,7 @@ class LoraReceiver(LoRa):
         self.set_dio_mapping([0] * 6)
         self.logger = logger
         self.dataLogger = dataLogger
+        self.lastSuccesfulTransmissionTimestamp = None
 
     def HasReceivedSuccessfullyInLast25Mins(self):
         return self.lastSuccesfulTransmissionTimestamp is not None and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) > timedelta(minutes=25)

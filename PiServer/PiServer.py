@@ -3,12 +3,12 @@ from SX127x.board_config import BOARD
 from SX127x.constants import *
 import json
 from LoraReceiver import LoraReceiver
-from StreamToLogger import StreamToLogger
+from Logging.StreamToLogger import StreamToLogger
 import sys
 import logging
 import logging_loki
-from logging.GoogleSheetsHandler import GoogleSheetsHandler
-from logging.ThingsSpeakLogger import ThingsSpeakLogger
+from Logging.GoogleSheetsHandler import GoogleSheetsHandler
+from Logging.ThingsSpeakLogger import ThingsSpeakLogger
 from threading import Timer
 
 logging.basicConfig(
@@ -29,8 +29,8 @@ logger.addHandler(
         '/home/pi/workspace/arduino-monitoring/PiServer/environment.json',
         'Arduino Monitoring'))
 
-sys.stdout = StreamToLogger(logger,logging.INFO)
-sys.stderr = StreamToLogger(logger,logging.ERROR)
+sys.stdout = StreamToLogger(logger,logging.INFO, sys.stdout)
+sys.stderr = StreamToLogger(logger,logging.ERROR, sys.stderr)
 
 environmentVariables = open('/home/pi/workspace/arduino-monitoring/PiServer/environment.json', "r")
 
@@ -46,6 +46,7 @@ lora = None
 
 def KeepLoraAlive():
     global lora
+    logger.info("keeping Lora receiver alive")
     if not lora.HasReceivedSuccessfullyInLast25Mins():
         shutdownLoraReceiver()
         keepAliveTimer = Timer(25*60, KeepLoraAlive)
@@ -54,6 +55,7 @@ def KeepLoraAlive():
 
 def startNewLoraReceiver():
     global lora
+    logger.info("started new Lora receiver")
     BOARD.setup()
     BOARD.reset()
     lora = LoraReceiver(verbose=True, logger=logger, dataLogger=dataLogger)
@@ -64,9 +66,11 @@ def startNewLoraReceiver():
     lora.set_spreading_factor(10)
     lora.set_rx_crc(True)
     lora.set_bw(BW.BW62_5)
+    lora.start()
 
 def shutdownLoraReceiver():
     global lora
+    logger.info("shutting down Lora receiver")
     lora.set_mode(MODE.SLEEP)
     BOARD.teardown()
     lora = None
