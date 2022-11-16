@@ -29,8 +29,8 @@ logger.addHandler(
         '/home/pi/workspace/arduino-monitoring/PiServer/environment.json',
         'Arduino Monitoring'))
 
-sys.stdout = StreamToLogger(logger,logging.INFO, sys.stdout)
-sys.stderr = StreamToLogger(logger,logging.ERROR, sys.stderr)
+sys.stdout = StreamToLogger(logger, logging.INFO)
+sys.stderr = StreamToLogger(logger, logging.ERROR)
 
 environmentVariables = open('/home/pi/workspace/arduino-monitoring/PiServer/environment.json', "r")
 
