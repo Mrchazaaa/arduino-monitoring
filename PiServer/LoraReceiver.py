@@ -18,14 +18,18 @@ class LoraReceiver(LoRa):
         self.logger = logger
         self.dataLogger = dataLogger
         self.lastSuccesfulTransmissionTimestamp = None
+        self.disposed = False
 
     def HasReceivedSuccessfullyInLast25Mins(self):
         return self.lastSuccesfulTransmissionTimestamp is not None and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) > timedelta(minutes=25)
 
+    def dispose(self):
+        self.disposed = True
+
     def start(self):
         self.reset_ptr_rx()
         self.set_mode(MODE.RXCONT)
-        while True:
+        while not self.disposed:
             sleep(.5)
             sys.stdout.flush()
 

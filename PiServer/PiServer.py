@@ -71,6 +71,7 @@ def startNewLoraReceiver():
 def shutdownLoraReceiver():
     global lora
     logger.info("shutting down Lora receiver")
+    lora.dispose()
     lora.set_mode(MODE.SLEEP)
     BOARD.teardown()
     lora = None
