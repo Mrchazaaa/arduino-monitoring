@@ -13,21 +13,20 @@ from threading import Timer
 
 logging.basicConfig(
         level=logging.DEBUG,
-        format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
+        handlers=[
+            logging_loki.LokiHandler(
+                url="http://localhost:3100/loki/api/v1/push",
+                tags={"application": "lora-receiver"},
+                auth=("admin", "admin"),
+                version="1"),
+            GoogleSheetsHandler(
+                '/home/pi/workspace/arduino-monitoring/PiServer/environment.json',
+                'Arduino Monitoring'),
+            logging.StreamHandler()
+        ])
 
 logger = logging.getLogger('logger')
-
-logger.addHandler(
-    logging_loki.LokiHandler(
-        url="http://localhost:3100/loki/api/v1/push",
-        tags={"application": "lora-receiver"},
-        auth=("admin", "admin"),
-        version="1"))
-
-logger.addHandler(
-    GoogleSheetsHandler(
-        '/home/pi/workspace/arduino-monitoring/PiServer/environment.json',
-        'Arduino Monitoring'))
 
 sys.stdout = StreamToLogger(logger, logging.INFO)
 sys.stderr = StreamToLogger(logger, logging.ERROR)
