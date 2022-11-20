@@ -3,10 +3,10 @@ from SX127x.board_config import BOARD
 from SX127x.constants import *
 import json
 from LoraReceiver import LoraReceiver
-from Logging.StreamToLogger import StreamToLogger
+from Logging.StdOutLogger import StdOutLogger
 import sys
 import logging
-import logging_loki
+from logging_loki import LokiHandler
 from Logging.GoogleSheetsHandler import GoogleSheetsHandler
 from Logging.ThingsSpeakLogger import ThingsSpeakLogger
 from threading import Timer
@@ -15,7 +15,7 @@ logging.basicConfig(
         level=logging.DEBUG,
         format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
         handlers=[
-            logging_loki.LokiHandler(
+            LokiHandler(
                 url="http://localhost:3100/loki/api/v1/push",
                 tags={"application": "lora-receiver"},
                 auth=("admin", "admin"),
@@ -28,18 +28,12 @@ logging.basicConfig(
 
 logger = logging.getLogger('logger')
 
-sys.stdout = StreamToLogger(logger, logging.INFO)
-sys.stderr = StreamToLogger(logger, logging.ERROR)
-
-environmentVariables = open('/home/pi/workspace/arduino-monitoring/PiServer/environment.json', "r")
-
-environmentVariablesJson = json.loads(environmentVariables.read())
-
-environmentVariables.close()
-
-thingsSpeakWriteKey = environmentVariablesJson["ts_write_key"]
-
-dataLogger = ThingsSpeakLogger(logger, thingsSpeakWriteKey)
+dataLogger = None
+with open('/home/pi/workspace/arduino-monitoring/PiServer/environment.json', "r") as environmentVariables:
+    environmentVariablesJson = json.loads(environmentVariables.read())
+    environmentVariables.close()
+    thingsSpeakWriteKey = environmentVariablesJson["ts_write_key"]
+    dataLogger = ThingsSpeakLogger(logger, thingsSpeakWriteKey)
 
 lora = None
 
@@ -75,17 +69,18 @@ def shutdownLoraReceiver():
     BOARD.teardown()
     lora = None
 
-try:
-    logger.info("started")
-    keepAliveTimer = Timer(25*60, KeepLoraAlive)
-    keepAliveTimer.start()
-    startNewLoraReceiver()
-except KeyboardInterrupt:
-    sys.stdout.flush()
-    sys.stderr.write("KeyboardInterrupt\n")
-except BaseException as err:
-    logger.exception(err)
-finally:
-    sys.stdout.flush()
-    shutdownLoraReceiver()
-    keepAliveTimer.cancel()
+with StdOutLogger(logger, "INFO") as redirector:
+    try:
+        logger.info("started")
+        keepAliveTimer = Timer(25*60, KeepLoraAlive)
+        keepAliveTimer.start()
+        startNewLoraReceiver()
+    except KeyboardInterrupt:
+        sys.stdout.flush()
+        sys.stderr.write("KeyboardInterrupt\n")
+    except BaseException as err:
+        logger.exception(err)
+    finally:
+        sys.stdout.flush()
+        shutdownLoraReceiver()
+        keepAliveTimer.cancel()
