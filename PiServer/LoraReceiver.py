@@ -1,8 +1,11 @@
-from time import sleep
 from datetime import datetime, timedelta
 from SX127x.LoRa import *
 from SX127x.constants import *
+from SX127x.board_config import BOARD
+import logging
+import SX127x
 import json
+import importlib
 
 def escapeString(input):
     escapes = ''.join([chr(char) for char in range(0, 32)])
@@ -10,28 +13,40 @@ def escapeString(input):
     return input.translate(translator)
 
 class LoraReceiver(LoRa):
+    disposed = False
 
     def __init__(self, verbose, logger, dataLogger):
+        self.spi = BOARD.SpiDev()              # init and get the baord's SPI
+        BOARD.setup()
+        BOARD.reset()
+        # self.spi = BOARD.SpiDev()              # init and get the baord's SPI
         super(LoraReceiver, self).__init__(verbose)
-        self.set_mode(MODE.SLEEP)
+        # self.set_mode(MODE.SLEEP)
         self.set_dio_mapping([0] * 6)
         self.logger = logger
         self.dataLogger = dataLogger
         self.lastSuccesfulTransmissionTimestamp = None
-        self.disposed = False
-
-    def HasReceivedSuccessfullyInLast25Mins(self):
-        return self.lastSuccesfulTransmissionTimestamp is not None and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) > timedelta(minutes=25)
-
-    def dispose(self):
-        self.disposed = True
 
     def start(self):
+        self.logger.info("starting lora receiver")
+        self.set_mode(MODE.STDBY)
+        #  Medium Range  Defaults after init are 434.0MHz, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on 13 dBm
+        self.set_pa_config(pa_select=1)
+        self.set_spreading_factor(10)
+        self.set_rx_crc(True)
+        self.set_bw(BW.BW62_5)
+
         self.reset_ptr_rx()
         self.set_mode(MODE.RXCONT)
-        while not self.disposed:
-            sleep(.5)
-            sys.stdout.flush()
+
+    def has_received_successfully_in_last(self, minutes):
+        return self.lastSuccesfulTransmissionTimestamp is not None and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) > timedelta(minutes=minutes)
+
+    def dispose(self):
+        # self.set_mode(MODE.SLEEP)
+        self.disposed = True
+        BOARD.teardown()
+        importlib.reload(SX127x)
 
     def on_payload_crc_error(self):
         irqFlags = self.get_irq_flags()
@@ -59,7 +74,7 @@ class LoraReceiver(LoRa):
 
             payloadObject = json.loads(payload)
 
-            self.dataLogger.log(payloadObject)
+            self.dataLogger.log(logging.DEBUG, payloadObject)
 
             self.lastSuccesfulTransmissionTimestamp = datetime.now()
         except BaseException as err:
