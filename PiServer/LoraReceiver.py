@@ -19,9 +19,7 @@ class LoraReceiver(LoRa):
         self.spi = BOARD.SpiDev()              # init and get the baord's SPI
         BOARD.setup()
         BOARD.reset()
-        # self.spi = BOARD.SpiDev()              # init and get the baord's SPI
         super(LoraReceiver, self).__init__(verbose)
-        # self.set_mode(MODE.SLEEP)
         self.set_dio_mapping([0] * 6)
         self.logger = logger
         self.dataLogger = dataLogger
