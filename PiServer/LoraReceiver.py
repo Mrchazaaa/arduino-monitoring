@@ -15,7 +15,7 @@ def escapeString(input):
 class LoraReceiver(LoRa):
     disposed = False
 
-    def __init__(self, verbose, logger, dataLogger):
+    def __init__(self, verbose, logger, dataLogger, instanceId):
         self.spi = BOARD.SpiDev()              # init and get the baord's SPI
         BOARD.setup()
         BOARD.reset()
@@ -24,6 +24,7 @@ class LoraReceiver(LoRa):
         self.logger = logger
         self.dataLogger = dataLogger
         self.lastSuccesfulTransmissionTimestamp = None
+        self.instanceId = instanceId
 
     def start(self):
         self.logger.info("starting lora receiver")
@@ -38,11 +39,13 @@ class LoraReceiver(LoRa):
         self.set_mode(MODE.RXCONT)
 
     def has_received_successfully_in_last(self, minutes):
-        return self.lastSuccesfulTransmissionTimestamp is not None and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) > timedelta(minutes=minutes)
+        self.logger.info(f'Computing \'has received successsfully request\' given last transmission timestamp {self.lastSuccesfulTransmissionTimestamp}.')
+        return (self.lastSuccesfulTransmissionTimestamp is not None) and (datetime.now() - self.lastSuccesfulTransmissionTimestamp) < timedelta(minutes=minutes)
 
     def dispose(self):
         # self.set_mode(MODE.SLEEP)
         self.disposed = True
+        super().dispose()
         BOARD.teardown()
         importlib.reload(SX127x)
 
@@ -53,7 +56,7 @@ class LoraReceiver(LoRa):
         self.logger.info(f'rx is good: {rxIsGood} {payload} {"CRC Error encountered"} irq flags: {irqFlags}.')
 
     def on_rx_done(self):
-        self.logger.info(f'Message received.')
+        self.logger.info(f'Message received for instance {self.instanceId}.')
 
         try:
             self.clear_irq_flags(RxDone=1)

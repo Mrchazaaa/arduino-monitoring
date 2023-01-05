@@ -5,7 +5,7 @@ Description=Raspberry pi arduino lora receiver
 Type=simple
 After=network-online.target
 Wants=network-online.target
-ExecStart=/usr/bin/python /home/pi/workspace/arduino-monitoring/PiServer/PiServer.py
+ExecStart=/home/pi/workspace/arduino-monitoring/PiServer/venv/bin/python /home/pi/workspace/arduino-monitoring/PiServer/PiServer.py
 
 [Install]
 WantedBy=multi-user.target
