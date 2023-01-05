@@ -1,11 +1,11 @@
 from time import sleep
+import uuid
 import json
 import sys
 import logging
 from logging_loki import LokiHandler
 from logging_loki import LokiHandler
 from Logging.GoogleSheetsHandler import GoogleSheetsHandler
-from Logging.ThingsSpeakLogger import ThingsSpeakLogger
 from Logging.ThingsSpeakHandler import ThingsSpeakHandler
 from threading import Timer
 from threading import Lock
@@ -31,8 +31,8 @@ logging.basicConfig(
 # logging.StreamHandler()
 
 logger = logging.getLogger('logger')
-# logger.addHandler(lokiHandler)
-# logger.addHandler(googleSheetsHandler)
+logger.addHandler(lokiHandler)
+logger.addHandler(googleSheetsHandler)
 
 dataLogger = logging.getLogger('data-logger')
 
@@ -52,7 +52,7 @@ def keep_lora_alive():
     global lora
     global loraLock
     logger.info("keeping Lora receiver alive")
-    if (not lora.has_received_successfully_in_last(10)):
+    if (not lora.has_received_successfully_in_last(15)):
         logger.info("shutting down Lora receiver")
         lora.dispose()
         loraLock.release()
@@ -68,7 +68,7 @@ try:
         if lora == None or lora.disposed:
             loraLock.acquire()
             logger.info("starting new Lora receiver")
-            lora = LoraReceiver.LoraReceiver(verbose=True, logger=logger, dataLogger=dataLogger)
+            lora = LoraReceiver.LoraReceiver(verbose=True, logger=logger, dataLogger=dataLogger, instanceId=uuid.uuid4())
             lora.start()
         sleep(.5)
         sys.stdout.flush()
