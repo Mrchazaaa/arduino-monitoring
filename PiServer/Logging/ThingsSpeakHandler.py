@@ -18,11 +18,12 @@ class ThingsSpeakHandler(StreamHandler):
         requestPayload = ""
         for key in record.msg:
             if key in self.propertyToField:
+                self.logger.info(f'{record.msg[key]}', extra={"tags": {"arduino-monitoring-data": key}})
                 requestPayload += f'{self.propertyToField[key]}={record.msg[key]}&'
 
         if len(requestPayload) > 0:
             request = f'https://api.thingspeak.com/update?api_key={self.thingsSpeakWriteKey}&{requestPayload}'
-            self.logger.info(f'request: {request}')
+            self.logger.info(f'request: {request}', extra={"tags": {"data": record.msg}})
             response = requests.get(request)
             self.logger.info(f'response: {response}')
         else:
