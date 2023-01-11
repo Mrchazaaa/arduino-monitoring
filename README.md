@@ -7,3 +7,6 @@ I've created this project so I can collect and monitor real-time data from the d
 <image src="./charts.png" width="800px">
 
 The biggest obstacle to this project was the lack of WiFi within the practice space. To address this issue, the Arduino uses a radio breakout board to transmit data at regular intervals to a Raspberry Pi (approximately 2km away within an urban environment) which uploads the data to <a href="https://thingspeak.com/channels/1640336" target="_blank">this ThingSpeak channel</a>.
+
+## Installation
+sudo bash -c "./deploy.sh"
